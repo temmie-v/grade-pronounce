@@ -6,6 +6,7 @@ Required
 - `token.json` ... example: `{"key1":"*********", "region":"eastasia"}`
 - `submit/` ... folder includes scripts(.txt, no break lines) and voices(.wav) \
     corresponding voice and script should have the same file name, like `sample.wav` and `sample.txt`
+- create a folder `output` ... grade will be written in this folder
 
 Run
 ```
@@ -27,7 +28,7 @@ Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluatio
     - sample.wav: saying `What time is it? (20sec no sound) What time is it?`\
     ref: [Sample Voice](https://github.com/MicrosoftLearning/AI-102-AIEngineer/tree/master/07-speech/Python/speaking-clock)
     - sample.txt > "What time is it now in Japan? What time is it?"
-- output: sample.txt
+- output: grade-sample.txt
 ```
 speech script: What time is it now in Japan? What time is it?
 
