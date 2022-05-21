@@ -7,6 +7,11 @@ Required
 - `submit/` ... folder includes scripts(.txt, no break lines) and voices(.wav) \
     corresponding voice and script should have the same file name, like `sample.wav` and `sample.txt`
 
+Run
+```
+python ./main.py
+```
+
 Result
 - `output/grade-{audioname}.txt`
 
