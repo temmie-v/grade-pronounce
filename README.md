@@ -1,5 +1,13 @@
 # grade-pronounce
 
+This program allows pronunciation assessment via asynchronous communication from [Azure Speech SDK](https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/speech-sdk).
+
+It supports audio (WAV format) longer than 15 seconds. It processes multiple files at once, and outputs each assessment in CSV format.
+
+[Azure Cognitive Services](https://azure.microsoft.com/ja-jp/services/cognitive-services/)' resource is required.
+
+---
+
 ## specification
 
 Required
@@ -17,13 +25,17 @@ Result
 - `output/grade-{audioname}.csv `
 
 ## grading
+
 Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluation of the **whole paragraph**, this program re-calculates grading:
 - Accuracy score: weighted average of each sentence's accuracy score
 - pronunciation score: weighted average of each sentence's pronunciation score
 - completeness score: percentage of words with error_type `None`, instead of `Insertion` and `Omission`
 - fluency score: percentage of time actually spoken
 
+---
+
 ## example
+
 - input
     - submit/sample.wav: saying  `What time is it?`\
     ref: [Sample Voice](https://github.com/MicrosoftLearning/AI-102-AIEngineer/tree/master/07-speech/Python/speaking-clock)
@@ -61,5 +73,6 @@ Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluatio
 
 
 ## references
+
 - [発音評価の使用方法 - Azure Cognitive Services](https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment)
 - [Sample Repository for the Microsoft Cognitive Services Speech SDK](https://github.com/Azure-Samples/cognitive-services-speech-sdk)
