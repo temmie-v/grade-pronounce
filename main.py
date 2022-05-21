@@ -49,6 +49,7 @@ def gradePronunciation(tokenpath, audiopath, textpath):
     done = False
     recognized_words = []
     accuracy_scores = []
+    pronunciation_scores = []
     durations = []
     valid_durations = []
     start_offset, end_offset = None, None
@@ -66,9 +67,10 @@ def gradePronunciation(tokenpath, audiopath, textpath):
             pronunciation_result.accuracy_score, pronunciation_result.pronunciation_score,
             pronunciation_result.completeness_score, pronunciation_result.fluency_score
         ))
-        nonlocal recognized_words, accuracy_scores, durations, valid_durations, start_offset, end_offset
+        nonlocal recognized_words, accuracy_scores, pronunciation_scores, durations, valid_durations, start_offset, end_offset
         recognized_words += pronunciation_result.words
         accuracy_scores.append(pronunciation_result.accuracy_score)
+        pronunciation_scores.append(pronunciation_result.pronunciation_score)
         json_result = evt.result.properties.get(
             speechsdk.PropertyId.SpeechServiceResponse_JsonResult)
         jo = json.loads(json_result)
@@ -105,6 +107,8 @@ def gradePronunciation(tokenpath, audiopath, textpath):
 
     _accuracy_score = sum(i[0] * i[1]
                           for i in zip(accuracy_scores, durations)) / sum(durations)
+    _pronunciation_score = sum(i[0] * i[1]
+                               for i in zip(pronunciation_scores, durations)) / sum(durations)
 
     if start_offset is not None:
         _fluency_score = sum(valid_durations) / \
@@ -138,8 +142,8 @@ def gradePronunciation(tokenpath, audiopath, textpath):
     _completeness_score = len(
         [w for w in final_words if w.error_type == 'None']) / len(reference_words) * 5
 
-    f.write('\nIn whole paragraph:\n    Accuracy score: {:.1f}, completeness score: {:.1f}, fluency score: {:.1f}\n'.format(
-        _accuracy_score, _completeness_score, _fluency_score
+    f.write('\nIn whole paragraph:\n    Accuracy score: {:.2f}, pronunciation score: {:.2f}, completeness score: {:.2f}, fluency score: {:.2f}\n'.format(
+        _accuracy_score, _pronunciation_score, _completeness_score, _fluency_score
     ))
     # accuracy_score etc. are grades for one sentence
     # _accuracy_score etc. summarize the score of each sentence

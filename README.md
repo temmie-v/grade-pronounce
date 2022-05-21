@@ -4,62 +4,71 @@
 
 Required
 - `token.json` ... example: `{"key1":"*********", "region":"eastasia"}`
-- `submit/` ... includes **one** script(.txt, no break lines) and **one** voice(.wav)
+- `submit/` ... folder includes scripts(.txt, no break lines) and voices(.wav) \
+    corresponding voice and script should have the same file name, like `sample.wav` and `sample.txt`
 
 Result
-- `output/{audioname}.txt`
+- `output/grade-{audioname}.txt`
+
+## grading
+Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluation of the whole paragraph, this program re-calculates grades:
+- Accuracy score: weighted average of each sentence's accuracy score
+- pronunciation score: weighted average of each sentence's pronunciation score
+- completeness score: percentage of words with error_type `None`
+- fluency score: percentage of time actually spoken
 
 ## example
-- input: [Sample Informative Speech (7min)](https://www.youtube.com/watch?v=SRKrbXEbEvU)
-    - 7min.wav
-    - script.txt
-- output: 7min.txt
+- input
+    - sample.wav: saying `What time is it? (20sec no sound) What time is it?`\
+    ref: [Sample Voice](https://github.com/MicrosoftLearning/AI-102-AIEngineer/tree/master/07-speech/Python/speaking-clock)
+    - sample.txt > "What time is it now in Japan? What time is it?"
+- output: sample.txt
 ```
-pronunciation assessment for: Six months ago my 78 young grandmother was...
-Result
-    Accuracy score: 88.0, pronunciation score: 89.4, completeness score : 94.0, fluency score: 89.0
-pronunciation assessment for: Than her doctor suggested acupuncture...
-Result
-    Accuracy score: 91.0, pronunciation score: 92.4, completeness score : 97.0, fluency score: 92.0
-...
-...
-In whole paragraph:
-    Accuracy score: 89.6, completeness score: 83.8, fluency score: 85.4
+speech script: What time is it now in Japan? What time is it?
 
-1: word: six	accuracy score: 100.0	error type: None
-    Phoneme : s, Score : 100.0;
-    Phoneme : ih, Score : 100.0;
-    Phoneme : k, Score : 100.0;
-    Phoneme : s, Score : 100.0;
-2: word: months	accuracy score: 100.0	error type: None
-    Phoneme : m, Score : 100.0;
-...
-7: word: young	accuracy score: 1.0	error type: Mispronunciation
-8: word: grandmother	accuracy score: 91.0	error type: None
-    Phoneme : g, Score : 100.0;
-    Phoneme : r, Score : 100.0;
-    Phoneme : ae, Score : 100.0;
-    Phoneme : n, Score : 32.0;
-    Phoneme : m, Score : 100.0;
-    Phoneme : ah, Score : 86.0;
-    Phoneme : dh, Score : 91.0;
-    Phoneme : ax, Score : 100.0;
-    Phoneme : r, Score : 100.0;
-9: word: was	accuracy score: 100.0	error type: None
-    Phoneme : w, Score : 100.0;
-    Phoneme : ax, Score : 100.0;
-    Phoneme : z, Score : 100.0;
-10: word: clear	accuracy score: 8.0	error type: Mispronunciation
-11: word: use	accuracy score: 28.0	error type: Mispronunciation
-12: word: in	accuracy score: 40.0	error type: Insertion
-13: word: her	accuracy score: 86.0	error type: Insertion
-14: word: independence	accuracy score: 100.0	error type: Insertion
-15: word: creeping	accuracy score: 0	error type: Omission
-16: word: this	accuracy score: 0	error type: Omission
-17: word: anger	accuracy score: 0	error type: Omission
-18: word: independents	accuracy score: 0	error type: Omission
-19: word: severe	accuracy score: 67.0	error type: None
-    Phoneme : s, Score : 31.0;
-...
-...
+pronunciation assessment for each sentence:
+- What time is it?
+    Accuracy score: 5.0, pronunciation score: 5.0, completeness score : 5.0, fluency score: 5.0
+- What time is it?
+    Accuracy score: 5.0, pronunciation score: 5.0, completeness score : 5.0, fluency score: 5.0
+
+In whole paragraph:
+    Accuracy score: 5.00, pronunciation score: 5.00, completeness score: 3.64, fluency score: 0.45
+
+pronunciation assessment for each word:
+1: word: what	accuracy score: 5.0	error type: None
+    Phoneme : w, Score : 4.5;
+    Phoneme : aa, Score : 3.5;
+    Phoneme : t, Score : 5.0;
+2: word: time	accuracy score: 5.0	error type: None
+    Phoneme : t, Score : 5.0;
+    Phoneme : ay, Score : 5.0;
+    Phoneme : m, Score : 5.0;
+3: word: is	accuracy score: 5.0	error type: None
+    Phoneme : ih, Score : 5.0;
+    Phoneme : z, Score : 5.0;
+4: word: it	accuracy score: 5.0	error type: None
+    Phoneme : ih, Score : 5.0;
+    Phoneme : t, Score : 5.0;
+5: word: now	accuracy score: 0	error type: Omission
+6: word: in	accuracy score: 0	error type: Omission
+7: word: japan	accuracy score: 0	error type: Omission
+8: word: what	accuracy score: 4.5	error type: None
+    Phoneme : w, Score : 4.0;
+    Phoneme : aa, Score : 2.0;
+    Phoneme : t, Score : 5.0;
+9: word: time	accuracy score: 5.0	error type: None
+    Phoneme : t, Score : 5.0;
+    Phoneme : ay, Score : 5.0;
+    Phoneme : m, Score : 5.0;
+10: word: is	accuracy score: 5.0	error type: None
+    Phoneme : ih, Score : 5.0;
+    Phoneme : z, Score : 5.0;
+11: word: it	accuracy score: 5.0	error type: None
+    Phoneme : ih, Score : 5.0;
+    Phoneme : t, Score : 5.0;
 ```
+
+## references
+- [発音評価の使用方法 - Azure Cognitive Services](https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment)
+- [Sample Repository for the Microsoft Cognitive Services Speech SDK](https://github.com/Azure-Samples/cognitive-services-speech-sdk)
