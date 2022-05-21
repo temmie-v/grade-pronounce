@@ -1,6 +1,7 @@
 # https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment
 # https://github.com/Azure-Samples/cognitive-services-speech-sdk
 from pathlib import Path
+import csv
 import difflib
 import glob
 import json
@@ -25,8 +26,9 @@ def gradePronunciation(tokenpath, audiopath, textpath):
         reference_text = texifile.read()
 
     # for output
-    f = open('./output/grade-{}.txt'.format(Path(audiopath).stem), 'w')
-    f.write('speech script: {}\n\n'.format(reference_text))
+    f = open('./output/grade-{}.csv'.format(Path(audiopath).stem), 'w', newline="")
+    writer = csv.writer(f)
+    writer.writerow(['File:', Path(audiopath).stem])
 
     speech_config = speechsdk.SpeechConfig(
         subscription=token['key1'], region=token['region'])
@@ -53,6 +55,7 @@ def gradePronunciation(tokenpath, audiopath, textpath):
     durations = []
     valid_durations = []
     start_offset, end_offset = None, None
+    results = []
 
     def stop_cb(evt):
         print('CLOSING on {}'.format(evt))
@@ -60,14 +63,11 @@ def gradePronunciation(tokenpath, audiopath, textpath):
         done = True
 
     def recognized(evt):
-        f.write('- {}\n'.format(evt.result.text))
         pronunciation_result = speechsdk.PronunciationAssessmentResult(
             evt.result)
-        f.write('    Accuracy score: {}, pronunciation score: {}, completeness score : {}, fluency score: {}\n'.format(
-            pronunciation_result.accuracy_score, pronunciation_result.pronunciation_score,
-            pronunciation_result.completeness_score, pronunciation_result.fluency_score
-        ))
-        nonlocal recognized_words, accuracy_scores, pronunciation_scores, durations, valid_durations, start_offset, end_offset
+        nonlocal recognized_words, accuracy_scores, pronunciation_scores, durations, valid_durations, start_offset, end_offset, results
+        results.append({'sentence': evt.result.text, 'accuracy': pronunciation_result.accuracy_score, 'pronunciation': pronunciation_result.pronunciation_score,
+                        'completeness': pronunciation_result.completeness_score, 'fluency': pronunciation_result.fluency_score})
         recognized_words += pronunciation_result.words
         accuracy_scores.append(pronunciation_result.accuracy_score)
         pronunciation_scores.append(pronunciation_result.pronunciation_score)
@@ -83,8 +83,6 @@ def gradePronunciation(tokenpath, audiopath, textpath):
         for w, d in zip(pronunciation_result.words, nb['Words']):
             if w.error_type == 'None':
                 valid_durations.append(d['Duration'] + 100000)
-
-    f.write('pronunciation assessment for each sentence:\n')
 
     speech_recognizer.recognized.connect(recognized)
     speech_recognizer.session_started.connect(
@@ -142,29 +140,30 @@ def gradePronunciation(tokenpath, audiopath, textpath):
     _completeness_score = len(
         [w for w in final_words if w.error_type == 'None']) / len(reference_words) * 5
 
-    f.write('\nIn whole paragraph:\n    Accuracy score: {:.2f}, pronunciation score: {:.2f}, completeness score: {:.2f}, fluency score: {:.2f}\n'.format(
-        _accuracy_score, _pronunciation_score, _completeness_score, _fluency_score
-    ))
+    writer.writerows([['', 'Accuracy', 'Pronunciation', 'Completeness', 'Fluency'],
+                     ['Summary', _accuracy_score, _pronunciation_score,
+                         _completeness_score, _fluency_score],
+                     []])
     # accuracy_score etc. are grades for one sentence
     # _accuracy_score etc. summarize the score of each sentence
+    writer.writerow(['Sentence', 'Accuracy', 'Pronunciation',
+                    'Completeness', 'Fluency', 'recognized'])
+    for i, result in enumerate(results):
+        writer.writerow(['No.' + str(i + 1), result['accuracy'], result['pronunciation'],
+                        result['completeness'], result['fluency'], result['sentence']])
 
-    f.write('\npronunciation assessment for each word:\n')
-    for i, word in enumerate(final_words):
-        f.write('{}: word: {}\taccuracy score: {}\terror type: {}\n'.format(
-            i + 1, word.word, word.accuracy_score, word.error_type
-        ))
-        if word.error_type == 'None':
-            for ph in word.phonemes:
-                f.write('    Phoneme : {}, Score : {};\n'.format(
-                    ph.phoneme, ph.accuracy_score
-                ))
+    writer.writerows([[],
+                     ['Word', 'Accuracy', 'error type']])
+    for word in final_words:
+        writer.writerow([word.word, word.accuracy_score, word.error_type])
+
     f.close()
 
 
 # main
 azuretokenpath = './token.json'
 if not os.path.isfile(azuretokenpath):
-    print("speech service key not found")
+    print('speech service key not found')
     import sys
     sys.exit(1)
 
@@ -173,7 +172,7 @@ audionames = glob.glob('./submit/*.wav')
 for audioname in audionames:
     textname = os.path.dirname(audioname) + '/' + Path(audioname).stem + '.txt'
     if not os.path.isfile(textname):
-        print(Path(audioname).stem, ": speech script not found")
+        print(Path(audioname).stem, ': speech script not found')
         import sys
         sys.exit(1)
     else:
