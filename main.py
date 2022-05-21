@@ -163,12 +163,17 @@ def gradePronunciation(tokenpath, audiopath, textpath):
 
 # main
 azuretokenpath = './token.json'
+if not os.path.isfile(azuretokenpath):
+    print("speech service key not found")
+    import sys
+    sys.exit(1)
+
 audionames = glob.glob('./submit/*.wav')
 
 for audioname in audionames:
     textname = os.path.dirname(audioname) + '/' + Path(audioname).stem + '.txt'
     if not os.path.isfile(textname):
-        print(Path(audioname).stem, ": speech script not found.")
+        print(Path(audioname).stem, ": speech script not found")
         import sys
         sys.exit(1)
     else:
