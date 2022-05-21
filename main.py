@@ -1,38 +1,36 @@
 # https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment
+# https://github.com/Azure-Samples/cognitive-services-speech-sdk
 from pathlib import Path
 import difflib
 import glob
 import json
 import string
+import os
 import time
+try:
+    import azure.cognitiveservices.speech as speechsdk
+except ImportError:
+    print('Speech SDK for Python could not import.')
+    import sys
+    sys.exit(1)
 
 
-def main():
-    try:
-        import azure.cognitiveservices.speech as speechsdk
-    except ImportError:
-        print('Speech SDK for Python could not import.')
-        import sys
-        sys.exit(1)
-
+def gradePronunciation(tokenpath, audiopath, textpath):
     #
     # preparation
-    with open('./token.json') as fp:
-        token = json.load(fp)
+    with open(tokenpath) as tokenfile:
+        token = json.load(tokenfile)
 
-    audionames = glob.glob('./submit/*.wav')
-    audioname = audionames[0]
-
-    textnames = glob.glob('./submit/*.txt')
-    with open(textnames[0]) as fp:
-        reference_text = fp.read()
+    with open(textpath) as texifile:
+        reference_text = texifile.read()
 
     # for output
-    f = open('./output/{}.txt'.format(Path(audioname).stem), 'w')
+    f = open('./output/grade-{}.txt'.format(Path(audiopath).stem), 'w')
+    f.write('speech script: {}\n\n'.format(reference_text))
 
     speech_config = speechsdk.SpeechConfig(
         subscription=token['key1'], region=token['region'])
-    audio_config = speechsdk.AudioConfig(filename=audioname)
+    audio_config = speechsdk.AudioConfig(filename=audiopath)
 
     speech_recognizer = speechsdk.SpeechRecognizer(
         speech_config=speech_config,
@@ -40,7 +38,7 @@ def main():
         audio_config=audio_config)
 
     pronunciation_config = speechsdk.PronunciationAssessmentConfig(reference_text=reference_text,
-                                                                   grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
+                                                                   grading_system=speechsdk.PronunciationAssessmentGradingSystem.FivePoint,
                                                                    granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
                                                                    enable_miscue=True)
 
@@ -61,10 +59,10 @@ def main():
         done = True
 
     def recognized(evt):
-        f.write('pronunciation assessment for: {}\n'.format(evt.result.text))
+        f.write('- {}\n'.format(evt.result.text))
         pronunciation_result = speechsdk.PronunciationAssessmentResult(
             evt.result)
-        f.write('Result\n    Accuracy score: {}, pronunciation score: {}, completeness score : {}, fluency score: {}\n'.format(
+        f.write('    Accuracy score: {}, pronunciation score: {}, completeness score : {}, fluency score: {}\n'.format(
             pronunciation_result.accuracy_score, pronunciation_result.pronunciation_score,
             pronunciation_result.completeness_score, pronunciation_result.fluency_score
         ))
@@ -84,6 +82,8 @@ def main():
             if w.error_type == 'None':
                 valid_durations.append(d['Duration'] + 100000)
 
+    f.write('pronunciation assessment for each sentence:\n')
+
     speech_recognizer.recognized.connect(recognized)
     speech_recognizer.session_started.connect(
         lambda evt: print('SESSION STARTED: {}'.format(evt)))
@@ -96,7 +96,7 @@ def main():
 
     # main part
     speech_recognizer.start_continuous_recognition()
-    ## Important: continuous_recognition_async removes 15sec limit
+    # Important: continuous_recognition_async removes 15sec limit
     while not done:
         time.sleep(0.5)
 
@@ -108,7 +108,7 @@ def main():
 
     if start_offset is not None:
         _fluency_score = sum(valid_durations) / \
-            (end_offset - start_offset) * 100
+            (end_offset - start_offset) * 5
 
     reference_words = [w.strip(string.punctuation)
                        for w in reference_text.lower().split()]
@@ -136,12 +136,15 @@ def main():
             final_words += recognized_words[j1:j2]
 
     _completeness_score = len(
-        [w for w in final_words if w.error_type == 'None']) / len(reference_words) * 100
+        [w for w in final_words if w.error_type == 'None']) / len(reference_words) * 5
 
-    f.write('\nIn whole paragraph:\n    Accuracy score: {:.1f}, completeness score: {:.1f}, fluency score: {:.1f}\n\n'.format(
+    f.write('\nIn whole paragraph:\n    Accuracy score: {:.1f}, completeness score: {:.1f}, fluency score: {:.1f}\n'.format(
         _accuracy_score, _completeness_score, _fluency_score
     ))
+    # accuracy_score etc. are grades for one sentence
+    # _accuracy_score etc. summarize the score of each sentence
 
+    f.write('\npronunciation assessment for each word:\n')
     for i, word in enumerate(final_words):
         f.write('{}: word: {}\taccuracy score: {}\terror type: {}\n'.format(
             i + 1, word.word, word.accuracy_score, word.error_type
@@ -154,5 +157,16 @@ def main():
     f.close()
 
 
-if __name__ == '__main__':
-    main()
+# main
+azuretokenpath = './token.json'
+audionames = glob.glob('./submit/*.wav')
+
+for audioname in audionames:
+    textname = os.path.dirname(audioname) + '/' + Path(audioname).stem + '.txt'
+    if not os.path.isfile(textname):
+        print(Path(audioname).stem, ": speech script not found.")
+        import sys
+        sys.exit(1)
+    else:
+        print('-', Path(audioname).stem)
+        gradePronunciation(azuretokenpath, audioname, textname)
