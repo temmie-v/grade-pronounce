@@ -14,66 +14,51 @@ python ./main.py
 ```
 
 Result
-- `output/grade-{audioname}.txt`
+- `output/grade-{audioname}.csv `
 
 ## grading
-Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluation of the whole paragraph, this program re-calculates grades:
+Azure Cognitive Services grades voices *sentence-by-sentence*. For the evaluation of the **whole paragraph**, this program re-calculates grading:
 - Accuracy score: weighted average of each sentence's accuracy score
 - pronunciation score: weighted average of each sentence's pronunciation score
-- completeness score: percentage of words with error_type `None`
+- completeness score: percentage of words with error_type `None`, instead of `Insertion` and `Omission`
 - fluency score: percentage of time actually spoken
 
 ## example
 - input
-    - submit/sample.wav: saying `What time is it? (20sec no sound) What time is it?`\
+    - submit/sample.wav: saying  `What time is it?`\
     ref: [Sample Voice](https://github.com/MicrosoftLearning/AI-102-AIEngineer/tree/master/07-speech/Python/speaking-clock)
-    - submit/sample.txt > "What time is it now in Japan? What time is it?"
-- output: grade-sample.txt
-```
-speech script: What time is it now in Japan? What time is it?
+    - submit/sample.txt > "What time is it now in Japan?" (deliberate mistake)
+- output: grade-sample.csv
 
-pronunciation assessment for each sentence:
-- What time is it?
-    Accuracy score: 5.0, pronunciation score: 5.0, completeness score : 5.0, fluency score: 5.0
-- What time is it?
-    Accuracy score: 5.0, pronunciation score: 5.0, completeness score : 5.0, fluency score: 5.0
+|File:|sample| | | | |
+|:----|:----|:----|:----|:----|:----|
+| |Accuracy|Pronunciation|Completeness|Fluency| |
+|Summary|5|5|2.857142857|5| |
+| | | | | | |
+|Sentence|Accuracy|Pronunciation|Completeness|Fluency|recognized|
+|No.1|5|5|5|5|What time is it?|
+| | | | | | |
+|Word|Phoneme|Accuracy|error type| | |
+|what| |5|None| | |
+| |w|5| | | |
+| |aa|3.5| | | |
+| |t|5| | | |
+|time| |5|None| | |
+| |t|5| | | |
+| |ay|5| | | |
+| |m|5| | | |
+|is| |5|None| | |
+| |ih|5| | | |
+| |z|5| | | |
+|it| |5|None| | |
+| |ih|5| | | |
+| |t|5| | | |
+|now| |0|Omission| | |
+|in| |0|Omission| | |
+|japan| |0|Omission| | |
 
-In whole paragraph:
-    Accuracy score: 5.00, pronunciation score: 5.00, completeness score: 3.64, fluency score: 0.45
 
-pronunciation assessment for each word:
-1: word: what	accuracy score: 5.0	error type: None
-    Phoneme : w, Score : 4.5;
-    Phoneme : aa, Score : 3.5;
-    Phoneme : t, Score : 5.0;
-2: word: time	accuracy score: 5.0	error type: None
-    Phoneme : t, Score : 5.0;
-    Phoneme : ay, Score : 5.0;
-    Phoneme : m, Score : 5.0;
-3: word: is	accuracy score: 5.0	error type: None
-    Phoneme : ih, Score : 5.0;
-    Phoneme : z, Score : 5.0;
-4: word: it	accuracy score: 5.0	error type: None
-    Phoneme : ih, Score : 5.0;
-    Phoneme : t, Score : 5.0;
-5: word: now	accuracy score: 0	error type: Omission
-6: word: in	accuracy score: 0	error type: Omission
-7: word: japan	accuracy score: 0	error type: Omission
-8: word: what	accuracy score: 4.5	error type: None
-    Phoneme : w, Score : 4.0;
-    Phoneme : aa, Score : 2.0;
-    Phoneme : t, Score : 5.0;
-9: word: time	accuracy score: 5.0	error type: None
-    Phoneme : t, Score : 5.0;
-    Phoneme : ay, Score : 5.0;
-    Phoneme : m, Score : 5.0;
-10: word: is	accuracy score: 5.0	error type: None
-    Phoneme : ih, Score : 5.0;
-    Phoneme : z, Score : 5.0;
-11: word: it	accuracy score: 5.0	error type: None
-    Phoneme : ih, Score : 5.0;
-    Phoneme : t, Score : 5.0;
-```
+
 
 ## references
 - [発音評価の使用方法 - Azure Cognitive Services](https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment)

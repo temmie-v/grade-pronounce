@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# 
 # https://docs.microsoft.com/ja-jp/azure/cognitive-services/speech-service/how-to-pronunciation-assessment
 # https://github.com/Azure-Samples/cognitive-services-speech-sdk
+
 from pathlib import Path
 import csv
 import difflib
@@ -26,7 +30,7 @@ def gradePronunciation(tokenpath, audiopath, textpath):
         reference_text = texifile.read()
 
     # for output
-    f = open('./output/grade-{}.csv'.format(Path(audiopath).stem), 'w', newline="")
+    f = open('./output/grade-{}.csv'.format(Path(audiopath).stem), 'w', newline='')
     writer = csv.writer(f)
     writer.writerow(['File:', Path(audiopath).stem])
 
@@ -153,9 +157,12 @@ def gradePronunciation(tokenpath, audiopath, textpath):
                         result['completeness'], result['fluency'], result['sentence']])
 
     writer.writerows([[],
-                     ['Word', 'Accuracy', 'error type']])
+                     ['Word', 'Phoneme', 'Accuracy', 'error type']])
     for word in final_words:
-        writer.writerow([word.word, word.accuracy_score, word.error_type])
+        writer.writerow([word.word, '', word.accuracy_score, word.error_type])
+        if word.error_type == 'None':
+            for ph in word.phonemes:
+                writer.writerow(['', ph.phoneme, ph.accuracy_score])
 
     f.close()
 
